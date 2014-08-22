@@ -1,0 +1,108 @@
+---
+title: "Practical_ML_Assignment"
+author: "Ashis Kumar Chanda"
+date: "Friday, August 22, 2014"
+output: html_document
+---
+
+This is an R Markdown document where a solution is provided with respect of the given datasets.
+I have followed different module and finally select randomForest, because it generates more efficient
+result than the others.
+
+
+```{r}
+
+library(caret)  # To build models
+library(randomForest) # To build models
+library(ggplot2)      # for plotting
+library(Hmisc)        # for utility operations
+library(foreach)
+library(doParallel)
+
+set.seed(2048)  # use a seed value
+options(warn=-1)
+
+Training_data_set <- read.csv("pml-training.csv", na.strings=c("#DIV/0!") )
+Testing_data_set <- read.csv("pml-testing.csv", na.strings=c("#DIV/0!") )
+
+# "#DIV/0!" is considered as ambigious data and replaced with Null
+```
+
+After loading given datasets, apply a casting operations in all columns
+
+
+```{r}
+
+for(i in c(8:ncol(Training_data_set) -1) ) 
+  {
+		Training_data_set[,i] = as.numeric(as.character(Training_data_set[,i]))
+	}
+
+for(i in c(8:ncol(Testing_data_set) -1) ) 
+	{
+		Testing_data_set[,i] = as.numeric(as.character(Testing_data_set[,i]))
+	}
+
+```
+
+A feature data set is constructed by ignoring blank data
+
+```{r}
+feature_data <- colnames(Training_data_set[colSums(is.na(Training_data_set)) == 0]) [-(1:7)]
+model_data <- Training_data_set[feature_data]
+feature_data
+```
+
+The model data is ready to analysis. Apply createDataPartition function to set training and testing data
+
+```{r}
+inTrain <- createDataPartition(y=model_data$classe, p=0.75, list=FALSE ) # considering 75% as training data
+training <- model_data[inTrain,]
+testing <- model_data[-inTrain,]
+```
+Then choose 5 random forest under these dataset. As this process takes huge time, get an faster way to use parallel processing in Google searching
+
+```{r}
+registerDoParallel()
+x <- training[-ncol(training)]
+y <- training$classe
+
+rf <- foreach(ntree=rep(150, 6), .combine=randomForest::combine, .packages='randomForest') %dopar% {
+randomForest(x, y, ntree=ntree) 
+}
+```
+
+Error reports are shown below 
+```{r}
+predictions1 <- predict(rf, newdata=training)
+confusionMatrix(predictions1,training$classe)
+
+
+predictions2 <- predict(rf, newdata=testing)
+confusionMatrix(predictions2,testing$classe)
+```
+
+This analysis provides a good result with less error. And I think this modules work properly in given data sets. 
+Then, I follow the code (showing at below, taken from Coursera Instruction Page) to prepare submission files
+
+Discussion: This experiment gives a nice experience of analysising real data. However, it takes a long time to execute in my old computer. Finally, I become happy to see the good output. Thanks
+
+```{r}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+
+x <- Testing_data_set
+x <- x[feature_data[feature_data!='classe']]
+answers <- predict(rf, newdata=x)
+
+answers
+
+pml_write_files(answers)
+```
+
