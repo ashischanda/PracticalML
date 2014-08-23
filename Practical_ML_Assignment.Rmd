@@ -85,7 +85,6 @@ confusionMatrix(predictions2,testing$classe)
 This analysis provides a good result with less error. And I think this modules work properly in given data sets. 
 Then, I follow the code (showing at below, taken from Coursera Instruction Page) to prepare submission files
 
-Discussion: This experiment gives a nice experience of analysising real data. However, it takes a long time to execute in my old computer. Finally, I become happy to see the good output. Thanks
 
 ```{r}
 pml_write_files = function(x){
@@ -105,4 +104,9 @@ answers
 
 pml_write_files(answers)
 ```
+Discussion
+----------
+This experiment gives a nice experience of analyzing real data. However, it takes a long time to execute in my old computer and shows many warning message. Finally, I become happy to see the nice output. Thanks
+
+
 
